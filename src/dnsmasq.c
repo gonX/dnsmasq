@@ -327,6 +327,11 @@ int main (int argc, char **argv)
     }
 #endif
 
+#ifdef HAVE_NFSET
+  if (daemon->nfsets)
+    nfset_init();
+#endif
+
 #if  defined(HAVE_LINUX_NETWORK)
   netlink_warn = netlink_init();
 #elif defined(HAVE_BSD_NETWORK)

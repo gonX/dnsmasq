@@ -531,7 +531,7 @@ static int find_soa(struct dns_header *header, size_t qlen, char *name, int *doc
    Return 1 if we reject an address because it look like part of dns-rebinding attack. */
 int extract_addresses(struct dns_header *header, size_t qlen, char *name, time_t now, 
 		      char **ipsets, int is_sign, int check_rebind, int no_cache_dnssec,
-		      int secure, int *doctored)
+		      int secure, int *doctored, struct nfset_list *nfsets)
 {
   unsigned char *p, *p1, *endrr, *namep;
   int i, j, qtype, qclass, aqtype, aqclass, ardlen, res, searched_soa = 0;
@@ -830,7 +830,17 @@ int extract_addresses(struct dns_header *header, size_t qlen, char *name, time_t
 				}
 			    }
 #endif
-			}
+
+#ifdef HAVE_NFSET
+			  if (nfsets && (flags & (F_IPV4 | F_IPV6)))
+                            {
+				for (struct nfset_list *cur = nfsets; cur != NULL; cur = cur->next) {
+			    	log_query((flags & (F_IPV4 | F_IPV6)) | F_NFSET, name, &addr, cur->str);
+					add_to_nfset(cur->str, &addr, flags);
+				}
+			    }
+#endif
+                        }
 		      
 		      newc = cache_insert(name, &addr, C_IN, now, attl, flags | F_FORWARD | secflag);
 		      if (newc && cpp)

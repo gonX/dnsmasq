@@ -175,6 +175,7 @@ RESOLVFILE
 #define HAVE_SCRIPT
 #define HAVE_AUTH
 #define HAVE_IPSET 
+#define HAVE_NFSET
 #define HAVE_LOOP
 #define HAVE_DUMPFILE
 
@@ -420,6 +421,10 @@ static char *compile_opts =
 "no-"
 #endif
 "ipset "
+#ifndef HAVE_NFSET
+"no-"
+#endif
+"nfset "
 #ifndef HAVE_AUTH
 "no-"
 #endif

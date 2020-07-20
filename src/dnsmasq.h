@@ -493,6 +493,7 @@ struct crec {
 #define F_SERVFAIL  (1u<<28) /* currently unused. */
 #define F_RCODE     (1u<<29)
 #define F_SRV       (1u<<30)
+#define F_NFSET     (1u<<31)
 
 #define UID_NONE      0
 /* Values of uid in crecs with F_CONFIG bit set. */
@@ -566,6 +567,19 @@ struct ipsets {
   char *domain;
   struct ipsets *next;
 };
+
+#ifdef HAVE_NFSET
+#include "dntree.h"
+
+struct nfset_list {
+  struct nfset_list *next;
+  const char *str;
+};
+
+struct nfsets {
+  struct dntree root;
+};
+#endif
 
 struct irec {
   union mysockaddr addr;
@@ -1042,6 +1056,9 @@ extern struct daemon {
   struct bogus_addr *bogus_addr, *ignore_addr;
   struct server *servers;
   struct ipsets *ipsets;
+#ifdef HAVE_NFSET
+  struct nfsets *nfsets;
+#endif
   int log_fac; /* log facility */
   char *log_file; /* optional log file */
   int max_logs;  /* queue limit */
@@ -1226,11 +1243,12 @@ unsigned char *skip_section(unsigned char *ansp, int count, struct dns_header *h
 unsigned int extract_request(struct dns_header *header, size_t qlen, 
 			       char *name, unsigned short *typep);
 size_t setup_reply(struct dns_header *header, size_t  qlen,
-		   union all_addr *addrp, unsigned int flags,
-		   unsigned long ttl);
+                  union all_addr *addrp, unsigned int flags,
+                  unsigned long ttl);
 int extract_addresses(struct dns_header *header, size_t qlen, char *name,
 		      time_t now, char **ipsets, int is_sign, int check_rebind,
-		      int no_cache_dnssec, int secure, int *doctored);
+		      int no_cache_dnssec, int secure, int *doctored,
+		      struct nfset_list *nfsets);
 size_t answer_request(struct dns_header *header, char *limit, size_t qlen,  
 		      struct in_addr local_addr, struct in_addr local_netmask, 
 		      time_t now, int ad_reqd, int do_bit, int have_pseudoheader);
@@ -1510,6 +1528,14 @@ void ubus_event_bcast(const char *type, const char *mac, const char *ip, const c
 #ifdef HAVE_IPSET
 void ipset_init(void);
 int add_to_ipset(const char *setname, const union all_addr *ipaddr, int flags, int remove);
+#endif
+
+/* nfset.c */
+#ifdef HAVE_NFSET
+void nfset_init(void);
+int add_to_nfset(const char *setname, const union all_addr *ipaddr, int flags);
+
+void nfset_display(struct dntree *root, size_t ident);
 #endif
 
 /* helper.c */
